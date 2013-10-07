@@ -3,7 +3,7 @@
 //--------------------------------------------------------------
 void testApp::setup(){
     // To use ofxWatchdog addon, you have to add
-    // some codes into main() function and testApp::update().
+    // some codes into main() function and testApp::update() function.
 }
 
 //--------------------------------------------------------------
