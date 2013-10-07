@@ -15,3 +15,8 @@ Only two functions:<br/>
 <br/>
   ofxWatchdog::watch(int msec, bool reboot, bool verbose)<br/>
   ofxWatchdog::clear(void)<br/>
+<br/>
+Tested environment:<br/>
+o MacOS X 10.7.5 + Xcode 4.6.2 + of 0.8.0 osx
+o MacOS X 10.8.5 + Xcode 4.6.0 + of 0.8.0 osx
+o (!!!NG!!!) MacOS X 10.8.5 + Xcode 5.0 + of 0.8.0 osx
