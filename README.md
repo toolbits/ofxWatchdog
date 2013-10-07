@@ -3,7 +3,8 @@ ofxWatchdog
 
 2013/10/07<br/>
 Current version is not compatible with Xcode 5.<br/>
-When application is starting, SIGTRAP is raised from glfwInit().<br/>
+When application is starting with Xcode's start button, SIGTRAP is raised from glfwInit().<br/>
+However, you can start application correctly when you start it from Finder.<br/>
 I'm trying to fix this issue.<br/>
 <br/>
 <br/>
