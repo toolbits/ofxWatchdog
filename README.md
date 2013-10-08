@@ -2,14 +2,15 @@ ofxWatchdog
 ===========
 
 2013/10/07<br/>
-Current version is not compatible with Xcode 5.<br/>
+Current version is not compatible with Xcode 5 yet.<br/>
 When application is starting with Xcode's start button, SIGTRAP is raised from glfwInit().<br/>
 However, you can start application correctly when you start it from Finder.<br/>
 I'm trying to fix this issue.<br/>
 <br/>
 <br/>
 A process watchdog timer for openFrameworks applications.<br/>
-You can watch your application's hang-up, illegal memory access, zero devide.<br/>
+You can watch your application's hang-up, illegal memory access,<br/>
+illegal instruction, segmentation fault, zero devide.<br/>
 Then exit safely or reboot application.<br/>
 <br/>
 Only two functions:<br/>
