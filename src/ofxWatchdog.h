@@ -57,9 +57,16 @@ class ofxWatchdog {
         static  bool            watch           (int msec, bool reboot, bool verbose = false);
         static  void            clear           (void);
     private:
+        static  bool            parent          (int msec, bool verbose);
+        static  bool            child           (bool verbose);
+        static  void            log             (bool verbose, char const* message);
+        static  void            error           (bool verbose, char const* message);
+        static  bool            sigAction       (int signal, void(*handler)(int, siginfo_t*, void*), int flag);
         static  void            onSigCHLD       (int signal, siginfo_t* info, void* param);
-        static  void            onSigBUS        (int signal, siginfo_t* info, void* param);
+        static  void            onSigILL        (int signal, siginfo_t* info, void* param);
         static  void            onSigFPE        (int signal, siginfo_t* info, void* param);
+        static  void            onSigBUS        (int signal, siginfo_t* info, void* param);
+        static  void            onSigSEGV       (int signal, siginfo_t* info, void* param);
     private:
         explicit                ofxWatchdog     (void);
                                 ofxWatchdog     (ofxWatchdog const&);

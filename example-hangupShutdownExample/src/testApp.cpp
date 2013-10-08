@@ -17,11 +17,20 @@ void testApp::draw(){
 }
 
 //--------------------------------------------------------------
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+#pragma clang optimize push
+#pragma clang optimize "O0"
 void testApp::keyPressed(int key){
-    int z = 1;
-    char* p = 0;
+    int volatile z = 1;
+    char* volatile p = 0;
     
     switch (key) {
+        case 'a':
+        case 'A':
+            // abort
+            abort();
+            break;
         case 'z':
         case 'Z':
             // zero devide
@@ -32,6 +41,16 @@ void testApp::keyPressed(int key){
             // illegal access
             *p = 0xAB;
             break;
+        case 'i':
+        case 'I':
+            // illegal instruction
+            raise(SIGILL);
+            break;
+        case 's':
+        case 'S':
+            // segmentation fault
+            (*((void(*)(int))&p))(z);
+            break;
         case 'h':
         case 'H':
             // infinite loop
@@ -39,6 +58,8 @@ void testApp::keyPressed(int key){
             break;
     }
 }
+#pragma clang optimize pop
+#pragma GCC pop_options
 
 //--------------------------------------------------------------
 void testApp::keyReleased(int key){
