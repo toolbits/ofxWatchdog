@@ -21,15 +21,25 @@ void testApp::draw(){
 #pragma GCC optimize ("O0")
 #pragma clang optimize push
 #pragma clang optimize "O0"
-void testApp::keyPressed(int key){
+void testApp::keyPressed(int key) throw (std::exception) {
     int volatile z = 1;
     char* volatile p = 0;
     
     switch (key) {
+        case 'i':
+        case 'I':
+            // illegal instruction
+            raise(SIGILL);
+            break;
         case 'a':
         case 'A':
             // abort
             abort();
+            break;
+        case 'e':
+        case 'E':
+            // exception
+            throw std::exception();
             break;
         case 'z':
         case 'Z':
@@ -40,11 +50,6 @@ void testApp::keyPressed(int key){
         case 'B':
             // illegal access
             *p = 0xAB;
-            break;
-        case 'i':
-        case 'I':
-            // illegal instruction
-            raise(SIGILL);
             break;
         case 's':
         case 'S':

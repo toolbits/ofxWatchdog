@@ -9,7 +9,7 @@ class testApp : public ofBaseApp{
 		void update();
 		void draw();
 		
-		void keyPressed(int key);
+		void keyPressed(int key) throw (std::exception);
 		void keyReleased(int key);
 		void mouseMoved(int x, int y);
 		void mouseDragged(int x, int y, int button);
