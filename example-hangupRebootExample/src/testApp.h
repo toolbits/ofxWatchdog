@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxWatchdog.h"
 
 class testApp : public ofBaseApp{
 	public:

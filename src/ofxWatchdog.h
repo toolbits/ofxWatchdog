@@ -47,26 +47,32 @@
 #ifndef __OFX_WATCHDOG_H
 #define __OFX_WATCHDOG_H
 
-#include <signal.h>
+#include <ofEvents.h>
 
 class ofxWatchdog {
     private:
         static  ofxWatchdog     _singleton;
     
     public:
-        static  bool            watch           (int msec, bool reboot, bool verbose = false);
+        static  bool            watch           (int msec, bool reboot, bool override = true, bool verbose = false);
         static  void            clear           (void);
     private:
-        static  bool            parent          (int msec, bool verbose);
-        static  bool            child           (bool verbose);
-        static  void            log             (bool verbose, char const* message);
-        static  void            error           (bool verbose, char const* message);
+        static  void            onExit          (void);
+        static  void            initialize      (void);
+        static  void            terminate       (void);
+        static  bool            parent          (int msec, int* code);
+        static  bool            child           (void);
+                void            onSetup         (ofEventArgs& event);
+                void            onUpdate        (ofEventArgs& event);
+        static  bool            install         (void);
         static  bool            sigAction       (int signal, void(*handler)(int, siginfo_t*, void*), int flag);
-        static  void            onSigCHLD       (int signal, siginfo_t* info, void* param);
-        static  void            onSigILL        (int signal, siginfo_t* info, void* param);
-        static  void            onSigFPE        (int signal, siginfo_t* info, void* param);
-        static  void            onSigBUS        (int signal, siginfo_t* info, void* param);
-        static  void            onSigSEGV       (int signal, siginfo_t* info, void* param);
+        static  void            onSigILL        (int signal, siginfo_t* info, void* context);
+        static  void            onSigABRT       (int signal, siginfo_t* info, void* context);
+        static  void            onSigFPE        (int signal, siginfo_t* info, void* context);
+        static  void            onSigBUS        (int signal, siginfo_t* info, void* context);
+        static  void            onSigSEGV       (int signal, siginfo_t* info, void* context);
+        static  void            log             (char const* message);
+        static  void            error           (char const* message);
     private:
         explicit                ofxWatchdog     (void);
                                 ofxWatchdog     (ofxWatchdog const&);

@@ -45,206 +45,299 @@
 */
 
 #include "ofxWatchdog.h"
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <iostream>
 
 ofxWatchdog ofxWatchdog::_singleton;
 static char g_stack[SIGSTKSZ];
 static sig_atomic_t volatile g_pid;
 static sig_atomic_t volatile g_pfd;
-static sig_atomic_t volatile g_live;
-static sig_atomic_t volatile g_kill;
+static sig_atomic_t volatile g_override;
+static sig_atomic_t volatile g_verbose;
 
 ofxWatchdog::ofxWatchdog(void)
 {
-    g_pid = -1;
+    initialize();
 }
 
 ofxWatchdog::~ofxWatchdog(void)
 {
-    if (g_pid >= 0) {
-        close(g_pfd);
-    }
+    terminate();
 }
 
-bool ofxWatchdog::watch(int msec, bool reboot, bool verbose)
+bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
 {
     stack_t stack;
     int pfd[2];
+    int code;
     bool result(false);
     
-    stack.ss_sp = &g_stack;
-    stack.ss_size = sizeof(g_stack);
-    stack.ss_flags = 0;
-    if (sigaltstack(&stack, NULL) == 0) {
-        while (true) {
-            if (pipe(pfd) == 0) {
-                g_pid = fork();
-                if (g_pid > 0) {
-                    close(pfd[1]);
-                    g_pfd = pfd[0];
-                    if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
-                        if (parent(msec, verbose) && reboot) {
-                            close(g_pfd);
-                            g_pid = -1;
-                            continue;
+    g_override = override;
+    g_verbose = verbose;
+    if (atexit(&onExit) == 0) {
+        stack.ss_sp = &g_stack;
+        stack.ss_size = sizeof(g_stack);
+        stack.ss_flags = 0;
+        if (sigaltstack(&stack, NULL) == 0) {
+            while (true) {
+                if (pipe(pfd) == 0) {
+                    g_pid = fork();
+                    if (g_pid > 0) {
+                        close(pfd[1]);
+                        g_pfd = pfd[0];
+                        if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
+                            if (parent(msec, &code) && reboot) {
+                                terminate();
+                                initialize();
+                                continue;
+                            }
+                            else {
+                                exit(code);
+                            }
+                        }
+                        else {
+                            error("ofxWatchdog [parent] controling pipe failed.");
+                        }
+                    }
+                    else if (g_pid == 0) {
+                        close(pfd[0]);
+                        g_pfd = pfd[1];
+                        if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
+                            if (child()) {
+                                result = true;
+                            }
+                        }
+                        else {
+                            error("ofxWatchdog [child] controling pipe failed.");
                         }
                     }
                     else {
-                        error(verbose, "ofxWatchdog [parent] controling pipe failed.");
-                    }
-                }
-                else if (g_pid == 0) {
-                    close(pfd[0]);
-                    g_pfd = pfd[1];
-                    if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
-                        if (child(verbose)) {
-                            usleep(100000);
-                            result = true;
-                        }
-                    }
-                    else {
-                        error(verbose, "ofxWatchdog [child] controling pipe failed.");
+                        close(pfd[0]);
+                        close(pfd[1]);
+                        error("ofxWatchdog [parent] forking failed.");
                     }
                 }
                 else {
-                    close(pfd[0]);
-                    close(pfd[1]);
-                    error(verbose, "ofxWatchdog [parent] forking failed.");
+                    error("ofxWatchdog [parent] allocating pipe failed.");
                 }
+                break;
             }
-            else {
-                error(verbose, "ofxWatchdog [parent] allocating pipe failed.");
-            }
-            break;
+        }
+        else {
+            error("ofxWatchdog [parent] allocating stack failed.");
         }
     }
     else {
-        error(verbose, "ofxWatchdog [parent] allocating stack failed.");
+        error("ofxWatchdog [parent] setting exit handler failed.");
     }
     return result;
 }
 
 void ofxWatchdog::clear(void)
 {
-    static char const state = '.';
+    static char const beacon = '.';
     
     if (g_pid == 0) {
-        write(g_pfd, &state, sizeof(state));
+        write(g_pfd, &beacon, sizeof(beacon));
     }
     return;
 }
 
-bool ofxWatchdog::parent(int msec, bool verbose)
+void ofxWatchdog::onExit(void)
 {
+    terminate();
+    if (g_pid == 0) {
+        _exit(EXIT_SUCCESS);
+    }
+    return;
+}
+
+void ofxWatchdog::initialize(void)
+{
+    g_pid = -1;
+    g_pfd = -1;
+    return;
+}
+
+void ofxWatchdog::terminate(void)
+{
+    if (g_pfd >= 0) {
+        close(g_pfd);
+        g_pfd = -1;
+    }
+    return;
+}
+
+bool ofxWatchdog::parent(int msec, int* code)
+{
+    char temp[256];
     int hangup;
+    int pid;
+    int status;
     bool signal;
-    char state;
+    char beacon;
     bool result(false);
     
-    g_live = true;
-    g_kill = false;
-    if (sigAction(SIGCHLD, &onSigCHLD, SA_NOCLDSTOP | SA_RESTART | SA_ONSTACK)) {
-        hangup = 0;
-        while (g_live) {
-            signal = true;
-            if (read(g_pfd, &state, sizeof(state)) <= 0) {
-                state = 'X';
+    *code = EXIT_SUCCESS;
+    hangup = 0;
+    while (true) {
+        if ((pid = waitpid(g_pid, &status, WNOHANG)) > 0) {
+            if (WIFEXITED(status)) {
+                if ((*code = WEXITSTATUS(status)) == EXIT_SUCCESS) {
+                    log("ofxWatchdog [parent] detects exit.");
+                }
+                else {
+                    snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d", *code);
+                    log(temp);
+                    result = true;
+                }
             }
-            switch (state) {
+            else if (WIFSIGNALED(status)) {
+                *code = EXIT_FAILURE;
+                result = true;
+                switch (WTERMSIG(status)) {
+                    case SIGTRAP:
+                        log("ofxWatchdog [parent] detects SIGTRAP, process shutdown.");
+                        result = false;
+                        break;
+                    case SIGILL:
+                        log("ofxWatchdog [parent] detects SIGILL.");
+                        break;
+                    case SIGABRT:
+                        log("ofxWatchdog [parent] detects SIGABRT.");
+                        break;
+                    case SIGFPE:
+                        log("ofxWatchdog [parent] detects SIGFPE.");
+                        break;
+                    case SIGBUS:
+                        log("ofxWatchdog [parent] detects SIGBUS.");
+                        break;
+                    case SIGSEGV:
+                        log("ofxWatchdog [parent] detects SIGSEGV.");
+                        break;
+                    default:
+                        snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d", WTERMSIG(status));
+                        log(temp);
+                        break;
+                }
+            }
+            else {
+                pid = 0;
+            }
+        }
+        if (pid == 0) {
+            signal = true;
+            if (read(g_pfd, &beacon, sizeof(beacon)) <= 0) {
+                beacon = 'X';
+            }
+            switch (beacon) {
                 case '.':
                     hangup = 0;
                     signal = false;
                     break;
                 case 'I':
-                    log(verbose, "ofxWatchdog [parent] detects SIGILL.");
+                    log("ofxWatchdog [parent] detects SIGILL.");
+                    break;
+                case 'A':
+                    log("ofxWatchdog [parent] detects SIGABRT.");
                     break;
                 case 'F':
-                    log(verbose, "ofxWatchdog [parent] detects SIGFPE.");
+                    log("ofxWatchdog [parent] detects SIGFPE.");
                     break;
                 case 'B':
-                    log(verbose, "ofxWatchdog [parent] detects SIGBUS.");
+                    log("ofxWatchdog [parent] detects SIGBUS.");
                     break;
                 case 'S':
-                    log(verbose, "ofxWatchdog [parent] detects SIGSEGV.");
+                    log("ofxWatchdog [parent] detects SIGSEGV.");
                     break;
                 default:
                     if (++hangup < msec) {
                         signal = false;
                     }
                     else {
-                        log(verbose, "ofxWatchdog [parent] detects hangup.");
+                        log("ofxWatchdog [parent] detects hangup.");
                     }
                     break;
             }
             if (signal) {
-                g_kill = true;
-                kill(g_pid, SIGTERM);
+                kill(g_pid, SIGKILL);
                 waitpid(g_pid, NULL, 0);
-                break;
+                *code = EXIT_FAILURE;
+                result = true;
             }
-            usleep(1000);
+            else {
+                usleep(1000);
+                continue;
+            }
         }
-        if (g_live) {
-            result = true;
+        else if (pid < 0) {
+            error("ofxWatchdog [parent] strangely already no child.");
         }
-    }
-    else {
-        error(verbose, "ofxWatchdog [parent] setting SIGCHLD failed.");
+        break;
     }
     return result;
 }
 
-bool ofxWatchdog::child(bool verbose)
+bool ofxWatchdog::child(void)
 {
     bool result(false);
     
-    if (sigAction(SIGILL, &onSigILL, SA_RESTART | SA_ONSTACK)) {
-        if (sigAction(SIGFPE, &onSigFPE, SA_RESTART | SA_ONSTACK)) {
-            if (sigAction(SIGBUS, &onSigBUS, SA_RESTART | SA_ONSTACK)) {
-                if (sigAction(SIGSEGV, &onSigSEGV, SA_RESTART | SA_ONSTACK)) {
-                    result = true;
-                }
-                else {
-                    error(verbose, "ofxWatchdog [child] setting SIGSEGV failed.");
-                }
-            }
-            else {
-                error(verbose, "ofxWatchdog [child] setting SIGBUS failed.");
-            }
-        }
-        else {
-            error(verbose, "ofxWatchdog [child] setting SIGFPE failed.");
-        }
-    }
-    else {
-        error(verbose, "ofxWatchdog [child] setting SIGILL failed.");
+    if (install()) {
+        ofAddListener(ofEvents().setup, &_singleton, &ofxWatchdog::onSetup);
+        ofAddListener(ofEvents().update, &_singleton, &ofxWatchdog::onUpdate);
+        result = true;
     }
     return result;
 }
 
-void ofxWatchdog::log(bool verbose, char const* message)
+void ofxWatchdog::onSetup(ofEventArgs& event)
 {
-    if (verbose) {
-        std::cout << message << std::endl;
+    if (!install()) {
+        error("ofxWatchdog [child] overwriting signal handler failed.");
     }
     return;
 }
 
-void ofxWatchdog::error(bool verbose, char const* message)
+void ofxWatchdog::onUpdate(ofEventArgs& event)
 {
-    if (verbose) {
-        std::cerr << message << std::endl;
-    }
-    if (g_pid == 0) {
-        _exit(EXIT_FAILURE);
+    clear();
+    return;
+}
+
+bool ofxWatchdog::install(void)
+{
+    bool result(false);
+    
+    if (g_override) {
+        if (sigAction(SIGILL, &onSigILL, SA_RESTART | SA_ONSTACK)) {
+            if (sigAction(SIGABRT, &onSigABRT, SA_RESTART | SA_ONSTACK)) {
+                if (sigAction(SIGFPE, &onSigFPE, SA_RESTART | SA_ONSTACK)) {
+                    if (sigAction(SIGBUS, &onSigBUS, SA_RESTART | SA_ONSTACK)) {
+                        if (sigAction(SIGSEGV, &onSigSEGV, SA_RESTART | SA_ONSTACK)) {
+                            result = true;
+                        }
+                        else {
+                            error("ofxWatchdog [child] setting SIGSEGV handler failed.");
+                        }
+                    }
+                    else {
+                        error("ofxWatchdog [child] setting SIGBUS handler failed.");
+                    }
+                }
+                else {
+                    error("ofxWatchdog [child] setting SIGFPE handler failed.");
+                }
+            }
+            else {
+                error("ofxWatchdog [child] setting SIGABRT handler failed.");
+            }
+        }
+        else {
+            error("ofxWatchdog [child] setting SIGILL handler failed.");
+        }
     }
     else {
-        exit(EXIT_FAILURE);
+        result = true;
     }
-    return;
+    return result;
 }
 
 bool ofxWatchdog::sigAction(int signal, void(*handler)(int, siginfo_t*, void*), int flag)
@@ -261,49 +354,64 @@ bool ofxWatchdog::sigAction(int signal, void(*handler)(int, siginfo_t*, void*), 
     return result;
 }
 
-void ofxWatchdog::onSigCHLD(int signal, siginfo_t* info, void* param)
+void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* context)
 {
-    if (info->si_code == CLD_EXITED) {
-        if (!g_kill) {
-            g_live = false;
-        }
-        g_kill = false;
+    static char const beacon = 'I';
+    
+    write(g_pfd, &beacon, sizeof(beacon));
+    pause();
+    return;
+}
+
+void ofxWatchdog::onSigABRT(int signal, siginfo_t* info, void* context)
+{
+    static char const beacon = 'A';
+    
+    write(g_pfd, &beacon, sizeof(beacon));
+    pause();
+    return;
+}
+
+void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* context)
+{
+    static char const beacon = 'F';
+    
+    write(g_pfd, &beacon, sizeof(beacon));
+    pause();
+    return;
+}
+
+void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* context)
+{
+    static char const beacon = 'B';
+    
+    write(g_pfd, &beacon, sizeof(beacon));
+    pause();
+    return;
+}
+
+void ofxWatchdog::onSigSEGV(int signal, siginfo_t* info, void* context)
+{
+    static char const beacon = 'S';
+    
+    write(g_pfd, &beacon, sizeof(beacon));
+    pause();
+    return;
+}
+
+void ofxWatchdog::log(char const* message)
+{
+    if (g_verbose) {
+        std::cout << message << std::endl;
     }
     return;
 }
 
-void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* param)
+void ofxWatchdog::error(char const* message)
 {
-    static char const state = 'I';
-    
-    write(g_pfd, &state, sizeof(state));
-    pause();
-    return;
-}
-
-void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* param)
-{
-    static char const state = 'F';
-    
-    write(g_pfd, &state, sizeof(state));
-    pause();
-    return;
-}
-
-void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* param)
-{
-    static char const state = 'B';
-    
-    write(g_pfd, &state, sizeof(state));
-    pause();
-    return;
-}
-
-void ofxWatchdog::onSigSEGV(int signal, siginfo_t* info, void* param)
-{
-    static char const state = 'S';
-    
-    write(g_pfd, &state, sizeof(state));
-    pause();
+    if (g_verbose) {
+        std::cerr << message << std::endl;
+    }
+    exit(EXIT_FAILURE);
     return;
 }
