@@ -3,7 +3,7 @@ ofxWatchdog
 
 2013/10/10<br/>
 I think there is one issue under using debugger with Xcode 4.6 / Xcode 5.<br/>
-If application shuts-down with SIGTRAP, please disable Xcode's breakpoint switch.<br/>
+If application shuts-down at startup with SIGTRAP, please disable Xcode's breakpoint switch.<br/>
 It is not a problem under release build.<br/>
 <br/>
 2013/10/07<br/>
