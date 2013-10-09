@@ -54,8 +54,21 @@ class ofxWatchdog {
         static  ofxWatchdog     _singleton;
     
     public:
+        // Use this at startup
+        //
+        //     msec : how long does the watchdog wait, when the process hangs-up in milli seconds
+        //   reboot : automatically restart the process
+        // override : use internal signal handler (optional)
+        //  verbose : print more log information (optional)
         static  bool            watch           (int msec, bool reboot, bool override = true, bool verbose = false);
+    
+        // Use this continuously before watchdog timer timeouts (optional)
+        // This function is optional, because ofxWatchdog automatically calls in update event.
         static  void            clear           (void);
+    
+        // Use this instead of ofExit() / exit() functions (optional)
+        // This function is optional, you can use if you want to pass exit code correctly.
+        static  void            exit            (int code = EXIT_SUCCESS);
     private:
         static  void            onExit          (void);
         static  void            initialize      (void);

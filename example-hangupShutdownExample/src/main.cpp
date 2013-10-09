@@ -8,8 +8,8 @@ int main(){
     //
     //     msec : how long does the watchdog wait, when the process hangs-up in milli seconds
     //   reboot : automatically restart the process
-    // override : use internal signal handler
-    //  verbose : print more log information
+    // override : use internal signal handler (optional)
+    //  verbose : print more log information (optional)
     
     if (ofxWatchdog::watch(3000, false, true, true)) {
         ofSetupOpenGL(1024,768, OF_WINDOW);			// <-------- setup the GL context

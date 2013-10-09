@@ -50,6 +50,7 @@ ofxWatchdog ofxWatchdog::_singleton;
 static char g_stack[SIGSTKSZ];
 static sig_atomic_t volatile g_pid;
 static sig_atomic_t volatile g_pfd;
+static sig_atomic_t volatile g_code;
 static sig_atomic_t volatile g_override;
 static sig_atomic_t volatile g_verbose;
 
@@ -70,23 +71,25 @@ bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
     int code;
     bool result(false);
     
+    g_code = EXIT_SUCCESS;
     g_override = override;
     g_verbose = verbose;
-    if (atexit(&onExit) == 0) {
+    if (::atexit(&onExit) == 0) {
         stack.ss_sp = &g_stack;
         stack.ss_size = sizeof(g_stack);
         stack.ss_flags = 0;
-        if (sigaltstack(&stack, NULL) == 0) {
+        if (::sigaltstack(&stack, NULL) == 0) {
             while (true) {
-                if (pipe(pfd) == 0) {
-                    g_pid = fork();
+                if (::pipe(pfd) == 0) {
+                    g_pid = ::fork();
                     if (g_pid > 0) {
-                        close(pfd[1]);
+                        ::close(pfd[1]);
                         g_pfd = pfd[0];
-                        if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
+                        if (::fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
                             if (parent(msec, &code) && reboot) {
                                 terminate();
                                 initialize();
+                                ::usleep(1000000);
                                 continue;
                             }
                             else {
@@ -98,9 +101,9 @@ bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
                         }
                     }
                     else if (g_pid == 0) {
-                        close(pfd[0]);
+                        ::close(pfd[0]);
                         g_pfd = pfd[1];
-                        if (fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
+                        if (::fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
                             if (child()) {
                                 result = true;
                             }
@@ -110,8 +113,8 @@ bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
                         }
                     }
                     else {
-                        close(pfd[0]);
-                        close(pfd[1]);
+                        ::close(pfd[0]);
+                        ::close(pfd[1]);
                         error("ofxWatchdog [parent] forking failed.");
                     }
                 }
@@ -136,8 +139,15 @@ void ofxWatchdog::clear(void)
     static char const beacon = '.';
     
     if (g_pid == 0) {
-        write(g_pfd, &beacon, sizeof(beacon));
+        ::write(g_pfd, &beacon, sizeof(beacon));
     }
+    return;
+}
+
+void ofxWatchdog::exit(int code)
+{
+    g_code = code;
+    ::exit(code);
     return;
 }
 
@@ -145,7 +155,7 @@ void ofxWatchdog::onExit(void)
 {
     terminate();
     if (g_pid == 0) {
-        _exit(EXIT_SUCCESS);
+        ::_exit(g_code);
     }
     return;
 }
@@ -160,7 +170,7 @@ void ofxWatchdog::initialize(void)
 void ofxWatchdog::terminate(void)
 {
     if (g_pfd >= 0) {
-        close(g_pfd);
+        ::close(g_pfd);
         g_pfd = -1;
     }
     return;
@@ -179,13 +189,13 @@ bool ofxWatchdog::parent(int msec, int* code)
     *code = EXIT_SUCCESS;
     hangup = 0;
     while (true) {
-        if ((pid = waitpid(g_pid, &status, WNOHANG)) > 0) {
+        if ((pid = ::waitpid(g_pid, &status, WNOHANG)) > 0) {
             if (WIFEXITED(status)) {
                 if ((*code = WEXITSTATUS(status)) == EXIT_SUCCESS) {
                     log("ofxWatchdog [parent] detects exit.");
                 }
                 else {
-                    snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d", *code);
+                    ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d", *code);
                     log(temp);
                     result = true;
                 }
@@ -214,7 +224,7 @@ bool ofxWatchdog::parent(int msec, int* code)
                         log("ofxWatchdog [parent] detects SIGSEGV.");
                         break;
                     default:
-                        snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d", WTERMSIG(status));
+                        ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d", WTERMSIG(status));
                         log(temp);
                         break;
                 }
@@ -225,7 +235,7 @@ bool ofxWatchdog::parent(int msec, int* code)
         }
         if (pid == 0) {
             signal = true;
-            if (read(g_pfd, &beacon, sizeof(beacon)) <= 0) {
+            if (::read(g_pfd, &beacon, sizeof(beacon)) <= 0) {
                 beacon = 'X';
             }
             switch (beacon) {
@@ -258,13 +268,13 @@ bool ofxWatchdog::parent(int msec, int* code)
                     break;
             }
             if (signal) {
-                kill(g_pid, SIGKILL);
-                waitpid(g_pid, NULL, 0);
+                ::kill(g_pid, SIGKILL);
+                ::waitpid(g_pid, NULL, 0);
                 *code = EXIT_FAILURE;
                 result = true;
             }
             else {
-                usleep(1000);
+                ::usleep(1000);
                 continue;
             }
         }
@@ -348,7 +358,7 @@ bool ofxWatchdog::sigAction(int signal, void(*handler)(int, siginfo_t*, void*), 
     action.sa_sigaction = handler;
     sigemptyset(&action.sa_mask);
     action.sa_flags = flag | SA_SIGINFO;
-    if (sigaction(signal, &action, NULL) == 0) {
+    if (::sigaction(signal, &action, NULL) == 0) {
         result = true;
     }
     return result;
@@ -358,8 +368,8 @@ void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* context)
 {
     static char const beacon = 'I';
     
-    write(g_pfd, &beacon, sizeof(beacon));
-    pause();
+    ::write(g_pfd, &beacon, sizeof(beacon));
+    ::pause();
     return;
 }
 
@@ -367,8 +377,8 @@ void ofxWatchdog::onSigABRT(int signal, siginfo_t* info, void* context)
 {
     static char const beacon = 'A';
     
-    write(g_pfd, &beacon, sizeof(beacon));
-    pause();
+    ::write(g_pfd, &beacon, sizeof(beacon));
+    ::pause();
     return;
 }
 
@@ -376,8 +386,8 @@ void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* context)
 {
     static char const beacon = 'F';
     
-    write(g_pfd, &beacon, sizeof(beacon));
-    pause();
+    ::write(g_pfd, &beacon, sizeof(beacon));
+    ::pause();
     return;
 }
 
@@ -385,8 +395,8 @@ void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* context)
 {
     static char const beacon = 'B';
     
-    write(g_pfd, &beacon, sizeof(beacon));
-    pause();
+    ::write(g_pfd, &beacon, sizeof(beacon));
+    ::pause();
     return;
 }
 
@@ -394,8 +404,8 @@ void ofxWatchdog::onSigSEGV(int signal, siginfo_t* info, void* context)
 {
     static char const beacon = 'S';
     
-    write(g_pfd, &beacon, sizeof(beacon));
-    pause();
+    ::write(g_pfd, &beacon, sizeof(beacon));
+    ::pause();
     return;
 }
 
