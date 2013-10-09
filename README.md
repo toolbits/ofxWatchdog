@@ -20,10 +20,11 @@ Then exit safely or reboot application.<br/>
 <br/>
 Only one function to use:<br/>
 <br/>
-  ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)<br/>
+o ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)<br/>
 <br/>
 Optionally you can use:<br/>
-  ofxWatchdog::clear(void)<br/>
+<br/>
+o ofxWatchdog::clear(void)<br/>
 <br/>
 Tested environment:<br/>
 o MacOS X 10.7.5 + Xcode 4.6.2 + of 0.8.0 osx<br/>
