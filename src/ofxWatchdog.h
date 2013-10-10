@@ -60,7 +60,7 @@ class ofxWatchdog {
         //   reboot : automatically restart the process
         // override : use internal signal handler (optional)
         //  verbose : print more log information (optional)
-        static  bool            watch           (int msec, bool reboot, bool override = true, bool verbose = false);
+        static  void            watch           (int msec, bool reboot, bool override = true, bool verbose = false);
     
         // Use this continuously before watchdog timer timeouts (optional)
         // This function is optional, because ofxWatchdog automatically calls in update event.
@@ -69,7 +69,7 @@ class ofxWatchdog {
         static  void            initialize      (void);
         static  void            terminate       (void);
         static  bool            parent          (int msec, int* code);
-        static  bool            child           (void);
+        static  void            child           (void);
         static  bool            daughter        (void);
                 void            onSetup         (ofEventArgs& event);
                 void            onUpdate        (ofEventArgs& event);
@@ -82,7 +82,7 @@ class ofxWatchdog {
         static  void            onSigBUS        (int signal, siginfo_t* info, void* context);
         static  void            onSigSEGV       (int signal, siginfo_t* info, void* context);
         static  void            log             (char const* message);
-        static  void            error           (char const* message, bool child);
+        static  void            error           (char const* message);
     private:
         explicit                ofxWatchdog     (void);
                                 ofxWatchdog     (ofxWatchdog const&);

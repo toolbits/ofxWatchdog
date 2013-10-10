@@ -11,12 +11,12 @@ int main(){
     // override : use internal signal handler (optional)
     //  verbose : print more log information (optional)
     
-    if (ofxWatchdog::watch(3000, false, true, true)) {
-        ofSetupOpenGL(1024,768, OF_WINDOW);			// <-------- setup the GL context
-        
-        // this kicks off the running of my app
-        // can be OF_WINDOW or OF_FULLSCREEN
-        // pass in width and height too:
-        ofRunApp( new testApp());
-    }
+    ofxWatchdog::watch(3000, false, true, true);
+    
+    ofSetupOpenGL(1024,768, OF_WINDOW);			// <-------- setup the GL context
+    
+    // this kicks off the running of my app
+    // can be OF_WINDOW or OF_FULLSCREEN
+    // pass in width and height too:
+    ofRunApp( new testApp());
 }
