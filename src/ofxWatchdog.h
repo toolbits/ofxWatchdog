@@ -65,19 +65,16 @@ class ofxWatchdog {
         // Use this continuously before watchdog timer timeouts (optional)
         // This function is optional, because ofxWatchdog automatically calls in update event.
         static  void            clear           (void);
-    
-        // Use this instead of ofExit() / exit() functions (optional)
-        // This function is optional, you can use if you want to pass exit code correctly.
-        static  void            exit            (int code = EXIT_SUCCESS);
     private:
-        static  void            onExit          (void);
         static  void            initialize      (void);
         static  void            terminate       (void);
         static  bool            parent          (int msec, int* code);
         static  bool            child           (void);
+        static  bool            daughter        (void);
                 void            onSetup         (ofEventArgs& event);
                 void            onUpdate        (ofEventArgs& event);
         static  bool            install         (void);
+        static  bool            sigMask         (int signal, bool set, bool* get);
         static  bool            sigAction       (int signal, void(*handler)(int, siginfo_t*, void*), int flag);
         static  void            onSigILL        (int signal, siginfo_t* info, void* context);
         static  void            onSigABRT       (int signal, siginfo_t* info, void* context);
@@ -85,7 +82,7 @@ class ofxWatchdog {
         static  void            onSigBUS        (int signal, siginfo_t* info, void* context);
         static  void            onSigSEGV       (int signal, siginfo_t* info, void* context);
         static  void            log             (char const* message);
-        static  void            error           (char const* message);
+        static  void            error           (char const* message, bool child);
     private:
         explicit                ofxWatchdog     (void);
                                 ofxWatchdog     (ofxWatchdog const&);

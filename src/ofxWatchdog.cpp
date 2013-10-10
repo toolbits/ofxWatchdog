@@ -1,56 +1,59 @@
 /*
-**      IridiumFrameworks
-**
-**      Original Copyright (C) 2013 - 2013 HORIGUCHI Junshi.
-**                                          http://iridium.jp/
-**                                          zap00365@nifty.com
-**      Portions Copyright (C) <year> <author>
-**                                          <website>
-**                                          <e-mail>
-**      Version     openFrameworks
-**      Website     http://iridium.jp/
-**      E-mail      zap00365@nifty.com
-**
-**      This source code is for Xcode.
-**      Xcode 4.6.2 (LLVM compiler 4.2)
-**
-**      ofxWatchdog.cpp
-**
-**      ------------------------------------------------------------------------
-**
-**      The MIT License (MIT)
-**
-**      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-**      associated documentation files (the "Software"), to deal in the Software without restriction,
-**      including without limitation the rights to use, copy, modify, merge, publish, distribute,
-**      sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-**      furnished to do so, subject to the following conditions:
-**      The above copyright notice and this permission notice shall be included in all copies or
-**      substantial portions of the Software.
-**      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
-**      BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-**      IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-**      WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-**      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**
-**      以下に定める条件に従い、本ソフトウェアおよび関連文書のファイル（以下「ソフトウェア」）の複製を
-**      取得するすべての人に対し、ソフトウェアを無制限に扱うことを無償で許可します。
-**      これには、ソフトウェアの複製を使用、複写、変更、結合、掲載、頒布、サブライセンス、および、または販売する権利、
-**      およびソフトウェアを提供する相手に同じことを許可する権利も無制限に含まれます。
-**      上記の著作権表示および本許諾表示を、ソフトウェアのすべての複製または重要な部分に記載するものとします。
-**      ソフトウェアは「現状のまま」で、明示であるか暗黙であるかを問わず、何らの保証もなく提供されます。
-**      ここでいう保証とは、商品性、特定の目的への適合性、および権利非侵害についての保証も含みますが、それに限定されるものではありません。
-**      作者または著作権者は、契約行為、不法行為、またはそれ以外であろうと、ソフトウェアに起因または関連し、
-**      あるいはソフトウェアの使用またはその他の扱いによって生じる一切の請求、損害、その他の義務について何らの責任も負わないものとします。
-*/
+ **      IridiumFrameworks
+ **
+ **      Original Copyright (C) 2013 - 2013 HORIGUCHI Junshi.
+ **                                          http://iridium.jp/
+ **                                          zap00365@nifty.com
+ **      Portions Copyright (C) <year> <author>
+ **                                          <website>
+ **                                          <e-mail>
+ **      Version     openFrameworks
+ **      Website     http://iridium.jp/
+ **      E-mail      zap00365@nifty.com
+ **
+ **      This source code is for Xcode.
+ **      Xcode 4.6.2 (LLVM compiler 4.2)
+ **
+ **      ofxWatchdog.cpp
+ **
+ **      ------------------------------------------------------------------------
+ **
+ **      The MIT License (MIT)
+ **
+ **      Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ **      associated documentation files (the "Software"), to deal in the Software without restriction,
+ **      including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ **      sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ **      furnished to do so, subject to the following conditions:
+ **      The above copyright notice and this permission notice shall be included in all copies or
+ **      substantial portions of the Software.
+ **      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ **      BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ **      IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ **      WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ **      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ **
+ **      以下に定める条件に従い、本ソフトウェアおよび関連文書のファイル（以下「ソフトウェア」）の複製を
+ **      取得するすべての人に対し、ソフトウェアを無制限に扱うことを無償で許可します。
+ **      これには、ソフトウェアの複製を使用、複写、変更、結合、掲載、頒布、サブライセンス、および、または販売する権利、
+ **      およびソフトウェアを提供する相手に同じことを許可する権利も無制限に含まれます。
+ **      上記の著作権表示および本許諾表示を、ソフトウェアのすべての複製または重要な部分に記載するものとします。
+ **      ソフトウェアは「現状のまま」で、明示であるか暗黙であるかを問わず、何らの保証もなく提供されます。
+ **      ここでいう保証とは、商品性、特定の目的への適合性、および権利非侵害についての保証も含みますが、それに限定されるものではありません。
+ **      作者または著作権者は、契約行為、不法行為、またはそれ以外であろうと、ソフトウェアに起因または関連し、
+ **      あるいはソフトウェアの使用またはその他の扱いによって生じる一切の請求、損害、その他の義務について何らの責任も負わないものとします。
+ */
 
 #include "ofxWatchdog.h"
+#ifdef TARGET_OSX
+#include <crt_externs.h>
+#include <mach-o/dyld.h>
+#endif
 
 ofxWatchdog ofxWatchdog::_singleton;
 static char g_stack[SIGSTKSZ];
 static sig_atomic_t volatile g_pid;
 static sig_atomic_t volatile g_pfd;
-static sig_atomic_t volatile g_code;
 static sig_atomic_t volatile g_override;
 static sig_atomic_t volatile g_verbose;
 
@@ -66,19 +69,20 @@ ofxWatchdog::~ofxWatchdog(void)
 
 bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
 {
-    stack_t stack;
+    char const* env;
+    bool mask;
     int pfd[2];
+#if defined TARGET_OSX
+    ProcessSerialNumber psn;
+#endif
     int code;
+    int temp[2];
     bool result(false);
     
-    g_code = EXIT_SUCCESS;
     g_override = override;
     g_verbose = verbose;
-    if (::atexit(&onExit) == 0) {
-        stack.ss_sp = &g_stack;
-        stack.ss_size = sizeof(g_stack);
-        stack.ss_flags = 0;
-        if (::sigaltstack(&stack, NULL) == 0) {
+    if ((env = ::getenv(typeid(_singleton).name())) == NULL) {
+        if (sigMask(SIGCHLD, true, &mask)) {
             while (true) {
                 if (::pipe(pfd) == 0) {
                     g_pid = ::fork();
@@ -86,50 +90,74 @@ bool ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
                         ::close(pfd[1]);
                         g_pfd = pfd[0];
                         if (::fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
+#if defined TARGET_OSX
+                            ::GetCurrentProcess(&psn);
+                            ::TransformProcessType(&psn, kProcessTransformToBackgroundApplication);
+#endif
                             if (parent(msec, &code) && reboot) {
                                 terminate();
                                 initialize();
+#if defined TARGET_OSX
+                                ::TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+#endif
                                 ::usleep(1000000);
                                 continue;
                             }
                             else {
-                                exit(code);
+                                terminate();
+                                ::exit(code);
                             }
                         }
                         else {
-                            error("ofxWatchdog [parent] controling pipe failed.");
+                            error("ofxWatchdog [parent] controling pipe failed.", false);
                         }
                     }
                     else if (g_pid == 0) {
                         ::close(pfd[0]);
                         g_pfd = pfd[1];
                         if (::fcntl(g_pfd, F_SETFL, O_NONBLOCK) == 0) {
-                            if (child()) {
-                                result = true;
+                            if (sigMask(SIGCHLD, mask, &mask)) {
+                                child();
+                                error("ofxWatchdog [child] fatal condition error.", true);
+                            }
+                            else {
+                                error("ofxWatchdog [child] setting signal mask failed.", false);
                             }
                         }
                         else {
-                            error("ofxWatchdog [child] controling pipe failed.");
+                            error("ofxWatchdog [child] controling pipe failed.", true);
                         }
                     }
                     else {
                         ::close(pfd[0]);
                         ::close(pfd[1]);
-                        error("ofxWatchdog [parent] forking failed.");
+                        error("ofxWatchdog [parent] forking failed.", false);
                     }
                 }
                 else {
-                    error("ofxWatchdog [parent] allocating pipe failed.");
+                    error("ofxWatchdog [parent] allocating pipe failed.", false);
                 }
                 break;
             }
         }
         else {
-            error("ofxWatchdog [parent] allocating stack failed.");
+            error("ofxWatchdog [parent] setting signal mask failed.", false);
+        }
+    }
+    else if (::sscanf(env, "%d:%d:%d:%d", &pfd[0], &pfd[1], &temp[0], &temp[1]) == 4) {
+        if (pfd[0] == 0 && dup2(pfd[1], pfd[1]) >= 0 && temp[0] == override && temp[1] == verbose) {
+            g_pid = pfd[0];
+            g_pfd = pfd[1];
+            if (daughter()) {
+                result = true;
+            }
+        }
+        else {
+            error("ofxWatchdog [daughter] checking environment variable failed.", false);
         }
     }
     else {
-        error("ofxWatchdog [parent] setting exit handler failed.");
+        error("ofxWatchdog [daughter] getting environment variable failed.", false);
     }
     return result;
 }
@@ -140,22 +168,6 @@ void ofxWatchdog::clear(void)
     
     if (g_pid == 0) {
         ::write(g_pfd, &beacon, sizeof(beacon));
-    }
-    return;
-}
-
-void ofxWatchdog::exit(int code)
-{
-    g_code = code;
-    ::exit(code);
-    return;
-}
-
-void ofxWatchdog::onExit(void)
-{
-    terminate();
-    if (g_pid == 0) {
-        ::_exit(g_code);
     }
     return;
 }
@@ -279,7 +291,7 @@ bool ofxWatchdog::parent(int msec, int* code)
             }
         }
         else if (pid < 0) {
-            error("ofxWatchdog [parent] strangely already no child.");
+            error("ofxWatchdog [parent] strangely already no child.", false);
         }
         break;
     }
@@ -288,12 +300,64 @@ bool ofxWatchdog::parent(int msec, int* code)
 
 bool ofxWatchdog::child(void)
 {
+    char temp[256];
+    char path[PATH_MAX];
+    uint32_t size;
+    char*** argv;
     bool result(false);
     
-    if (install()) {
-        ofAddListener(ofEvents().setup, &_singleton, &ofxWatchdog::onSetup);
-        ofAddListener(ofEvents().update, &_singleton, &ofxWatchdog::onUpdate);
-        result = true;
+    ::snprintf(temp, sizeof(temp), "%d:%d:%d:%d", g_pid, g_pfd, g_override, g_verbose);
+    if (::setenv(typeid(_singleton).name(), temp, true) == 0) {
+        size = 0;
+        argv = NULL;
+#if defined TARGET_OSX
+        size = sizeof(path);
+        if (::_NSGetExecutablePath(path, &size) == 0) {
+            if ((argv = ::_NSGetArgv()) == NULL) {
+                error("ofxWatchdog [child] getting argv failed.", true);
+            }
+        }
+        else {
+            error("ofxWatchdog [child] getting path failed.", true);
+        }
+#else
+#error "algorithm not implemented"
+#endif
+        if (size > 0 && argv != NULL) {
+            if (::execv(path, *argv) == 0) {
+                result = true;
+            }
+            else {
+                error("ofxWatchdog [child] executing daughter failed.", true);
+            }
+        }
+        else {
+            error("ofxWatchdog [child] checking parameter failed.", true);
+        }
+    }
+    else {
+        error("ofxWatchdog [child] setting environment variable failed.", true);
+    }
+    return result;
+}
+
+bool ofxWatchdog::daughter(void)
+{
+    stack_t stack;
+    bool result(false);
+    
+    stack.ss_sp = &g_stack;
+    stack.ss_size = sizeof(g_stack);
+    stack.ss_flags = 0;
+    if (::sigaltstack(&stack, NULL) == 0) {
+        if (install()) {
+            ofAddListener(ofEvents().setup, &_singleton, &ofxWatchdog::onSetup);
+            ofAddListener(ofEvents().update, &_singleton, &ofxWatchdog::onUpdate);
+            result = true;
+        }
+    }
+    else {
+        error("ofxWatchdog [daughter] allocating stack failed.", false);
     }
     return result;
 }
@@ -301,7 +365,7 @@ bool ofxWatchdog::child(void)
 void ofxWatchdog::onSetup(ofEventArgs& event)
 {
     if (!install()) {
-        error("ofxWatchdog [child] overwriting signal handler failed.");
+        error("ofxWatchdog [daughter] overwriting signal handler failed.", false);
     }
     return;
 }
@@ -325,26 +389,41 @@ bool ofxWatchdog::install(void)
                             result = true;
                         }
                         else {
-                            error("ofxWatchdog [child] setting SIGSEGV handler failed.");
+                            error("ofxWatchdog [daughter] setting SIGSEGV handler failed.", false);
                         }
                     }
                     else {
-                        error("ofxWatchdog [child] setting SIGBUS handler failed.");
+                        error("ofxWatchdog [daughter] setting SIGBUS handler failed.", false);
                     }
                 }
                 else {
-                    error("ofxWatchdog [child] setting SIGFPE handler failed.");
+                    error("ofxWatchdog [daughter] setting SIGFPE handler failed.", false);
                 }
             }
             else {
-                error("ofxWatchdog [child] setting SIGABRT handler failed.");
+                error("ofxWatchdog [daughter] setting SIGABRT handler failed.", false);
             }
         }
         else {
-            error("ofxWatchdog [child] setting SIGILL handler failed.");
+            error("ofxWatchdog [daughter] setting SIGILL handler failed.", false);
         }
     }
     else {
+        result = true;
+    }
+    return result;
+}
+
+bool ofxWatchdog::sigMask(int signal, bool set, bool* get)
+{
+    sigset_t mask;
+    sigset_t save;
+    bool result(false);
+    
+    sigemptyset(&mask);
+    sigaddset(&mask, signal);
+    if (::sigprocmask((set) ? (SIG_BLOCK) : (SIG_UNBLOCK), &mask, &save) == 0) {
+        *get = sigismember(&save, signal);
         result = true;
     }
     return result;
@@ -369,6 +448,7 @@ void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* context)
     static char const beacon = 'I';
     
     ::write(g_pfd, &beacon, sizeof(beacon));
+    terminate();
     ::pause();
     return;
 }
@@ -378,6 +458,7 @@ void ofxWatchdog::onSigABRT(int signal, siginfo_t* info, void* context)
     static char const beacon = 'A';
     
     ::write(g_pfd, &beacon, sizeof(beacon));
+    terminate();
     ::pause();
     return;
 }
@@ -387,6 +468,7 @@ void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* context)
     static char const beacon = 'F';
     
     ::write(g_pfd, &beacon, sizeof(beacon));
+    terminate();
     ::pause();
     return;
 }
@@ -396,6 +478,7 @@ void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* context)
     static char const beacon = 'B';
     
     ::write(g_pfd, &beacon, sizeof(beacon));
+    terminate();
     ::pause();
     return;
 }
@@ -405,6 +488,7 @@ void ofxWatchdog::onSigSEGV(int signal, siginfo_t* info, void* context)
     static char const beacon = 'S';
     
     ::write(g_pfd, &beacon, sizeof(beacon));
+    terminate();
     ::pause();
     return;
 }
@@ -417,11 +501,17 @@ void ofxWatchdog::log(char const* message)
     return;
 }
 
-void ofxWatchdog::error(char const* message)
+void ofxWatchdog::error(char const* message, bool child)
 {
     if (g_verbose) {
         std::cerr << message << std::endl;
     }
-    exit(EXIT_FAILURE);
+    terminate();
+    if (child) {
+        ::_exit(EXIT_FAILURE);
+    }
+    else {
+        ::exit(EXIT_FAILURE);
+    }
     return;
 }
