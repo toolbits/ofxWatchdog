@@ -52,9 +52,9 @@
 
 ofxWatchdog ofxWatchdog::_singleton;
 //  initial -> pid == -1
-//   parent -> pid != getpid()
+//   parent -> pid != ::getpid()
 //    child -> pid == 0
-// daughter -> pid == getpid()
+// daughter -> pid == ::getpid()
 static sig_atomic_t volatile g_pid;
 //  initial -> pfd == -1
 static sig_atomic_t volatile g_pfd;
@@ -147,7 +147,7 @@ void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
         }
     }
     else if (::sscanf(env, "%d:%d:%d:%d", &pfd[0], &pfd[1], &temp[0], &temp[1]) == 4) {
-        if (pfd[0] == getpid() && dup2(pfd[1], pfd[1]) >= 0 && temp[0] == override && temp[1] == verbose) {
+        if (pfd[0] == ::getpid() && ::dup2(pfd[1], pfd[1]) >= 0 && temp[0] == override && temp[1] == verbose) {
             g_pid = pfd[0];
             g_pfd = pfd[1];
             if (!daughter()) {
@@ -168,7 +168,7 @@ void ofxWatchdog::clear(void)
 {
     static char const s_beacon = '.';
     
-    if (g_pid == getpid()) {
+    if (g_pid == ::getpid()) {
         ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     }
     return;
@@ -311,7 +311,7 @@ void ofxWatchdog::child(void)
     uint32_t size;
     char*** argv;
     
-    ::snprintf(temp, sizeof(temp), "%d:%d:%d:%d", getpid(), g_pfd, g_override, g_verbose);
+    ::snprintf(temp, sizeof(temp), "%d:%d:%d:%d", ::getpid(), g_pfd, g_override, g_verbose);
     if (::setenv(typeid(_singleton).name(), temp, true) == 0) {
         size = 0;
         argv = NULL;
