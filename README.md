@@ -25,14 +25,3 @@ Maybe fix all bugs.<br/>
 I changed the design to use execv() function.<br/>
 Supports doc-icon optimization, inherites boot arguments, inherites environment variables.<br/>
 Returns correct exit status.<br/>
-<br/>
-<s>2013/10/10<br/>
-I think there is one issue under using debugger with Xcode 4.6 / Xcode 5.<br/>
-If application shuts-down at startup with SIGTRAP, please disable Xcode's breakpoint switch.<br/>
-It is not a problem under release build.<br/>
-<br/>
-2013/10/07<br/>
-Current version is not compatible with Xcode 5 yet.<br/>
-When application is starting with Xcode's start button, SIGTRAP is raised from glfwInit().<br/>
-However, you can start application correctly when you start it from Finder.<br/>
-I'm trying to fix this issue.<br/></s>
