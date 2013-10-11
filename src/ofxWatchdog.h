@@ -60,7 +60,7 @@ class ofxWatchdog {
         //   reboot : automatically restart the process
         // override : use internal signal handler (optional)
         //  verbose : print more log information (optional)
-        static  void            watch           (int msec, bool reboot, bool override = true, bool verbose = false);
+        static  void            watch           (int msec, bool reboot, bool override = true, bool verbose = true);
     
         // Use this continuously before watchdog timer timeouts (optional)
         // This function is optional, because ofxWatchdog automatically calls in update event.
