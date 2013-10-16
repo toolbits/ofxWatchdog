@@ -66,6 +66,8 @@ class ofxWatchdog {
         // This function is optional, because ofxWatchdog automatically calls in update event.
         static  void            clear           (void);
     private:
+        explicit                ofxWatchdog     (void);
+                                ~ofxWatchdog    (void);
         static  void            initialize      (void);
         static  void            terminate       (void);
         static  bool            parent          (int msec, int* code);
@@ -84,9 +86,7 @@ class ofxWatchdog {
         static  void            log             (char const* message);
         static  void            error           (char const* message);
     private:
-        explicit                ofxWatchdog     (void);
                                 ofxWatchdog     (ofxWatchdog const&);
-                                ~ofxWatchdog    (void);
                 ofxWatchdog&    operator=       (ofxWatchdog const&);
 };
 
