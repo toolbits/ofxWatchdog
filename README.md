@@ -15,6 +15,6 @@ Optionally you can use:<br/>
 o ofxWatchdog::clear(void)<br/>
 <br/>
 Development environment:<br/>
-o MacOS X 10.7.5 + Xcode 4.6.2 + of 0.8.0 osx<br/>
+o <NEW!> MacOS X 10.9.4 + Xcode 5.1.1 + of 0.8.3 osx<br/>
 o MacOS X 10.8.5 + Xcode 5.0 + of 0.8.0 osx<br/>
-o (not tested) MacOS X 10.8.5 + Xcode 4.6.0 + of 0.8.0 osx<br/>
+o MacOS X 10.7.5 + Xcode 4.6.2 + of 0.8.0 osx<br/>

@@ -1,7 +1,7 @@
 /*
 **      IridiumFrameworks
 **
-**      Original Copyright (C) 2013 - 2013 HORIGUCHI Junshi.
+**      Original Copyright (C) 2013 - 2014 HORIGUCHI Junshi.
 **                                          http://iridium.jp/
 **                                          zap00365@nifty.com
 **      Portions Copyright (C) <year> <author>
@@ -12,7 +12,7 @@
 **      E-mail      zap00365@nifty.com
 **
 **      This source code is for Xcode.
-**      Xcode 4.6.2 (LLVM compiler 4.2)
+**      Xcode 5.1.1 (Apple LLVM 5.1)
 **
 **      ofxWatchdog.h
 **
