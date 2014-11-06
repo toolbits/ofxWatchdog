@@ -16,8 +16,8 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
                BuildableName = "example-hangupShutdownExample.app"
-               BlueprintName = "example-hangupShutdownExample"
-               ReferencedContainer = "container:example-hangupShutdownExample.xcodeproj">
+               BlueprintName = "example_hangupShutdownExample"
+               ReferencedContainer = "container:example_hangupShutdownExample.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -34,8 +34,8 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
             BuildableName = "example-hangupShutdownExample.app"
-            BlueprintName = "example-hangupShutdownExample"
-            ReferencedContainer = "container:example-hangupShutdownExample.xcodeproj">
+            BlueprintName = "example_hangupShutdownExample"
+            ReferencedContainer = "container:example_hangupShutdownExample.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </TestAction>
@@ -53,8 +53,8 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
             BuildableName = "example-hangupShutdownExample.app"
-            BlueprintName = "example-hangupShutdownExample"
-            ReferencedContainer = "container:example-hangupShutdownExample.xcodeproj">
+            BlueprintName = "example_hangupShutdownExample"
+            ReferencedContainer = "container:example_hangupShutdownExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -71,8 +71,8 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
             BuildableName = "example-hangupShutdownExample.app"
-            BlueprintName = "example-hangupShutdownExample"
-            ReferencedContainer = "container:example-hangupShutdownExample.xcodeproj">
+            BlueprintName = "example_hangupShutdownExample"
+            ReferencedContainer = "container:example_hangupShutdownExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

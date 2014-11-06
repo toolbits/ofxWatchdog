@@ -47,12 +47,13 @@
 #ifndef __OFX_WATCHDOG_H
 #define __OFX_WATCHDOG_H
 
+#include <signal.h>
 #include <ofEvents.h>
 
 class ofxWatchdog {
     private:
         static  ofxWatchdog     _singleton;
-    
+
     public:
         // Use this at startup
         //
@@ -61,7 +62,7 @@ class ofxWatchdog {
         // override : use internal signal handler (optional)
         //  verbose : print more log information (optional)
         static  void            watch           (int msec, bool reboot, bool override = true, bool verbose = true);
-    
+
         // Use this continuously before watchdog timer timeouts (optional)
         // This function is optional, because ofxWatchdog automatically calls in update event.
         static  void            clear           (void);

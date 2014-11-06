@@ -45,6 +45,9 @@
 */
 
 #include "ofxWatchdog.h"
+#include <typeinfo>
+#include <fcntl.h>
+#include <sys/wait.h>
 #ifdef TARGET_OSX
 #include <crt_externs.h>
 #include <mach-o/dyld.h>
@@ -81,7 +84,7 @@ void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
 #endif
     int code;
     int temp[2];
-    
+
     g_override = override;
     g_verbose = verbose;
     if ((env = ::getenv(typeid(_singleton).name())) == NULL) {
@@ -167,7 +170,7 @@ void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
 void ofxWatchdog::clear(void)
 {
     static char const s_beacon = '.';
-    
+
     if (g_pid == ::getpid()) {
         ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     }
@@ -199,7 +202,7 @@ bool ofxWatchdog::parent(int msec, int* code)
     bool signal;
     char beacon;
     bool result(false);
-    
+
     *code = EXIT_SUCCESS;
     hangup = 0;
     while (true) {
@@ -309,8 +312,17 @@ void ofxWatchdog::child(void)
     char temp[256];
     char path[PATH_MAX];
     uint32_t size;
-    char*** argv;
-    
+    char const* const* argv;
+#if defined TARGET_OSX
+    char*** argp;
+#elif defined TARGET_LINUX
+    FILE* fp;
+    char* ap;
+    size_t as;
+    vector<string> args;
+    vector<char const*> argp;
+#endif
+
     ::snprintf(temp, sizeof(temp), "%d:%d:%d:%d", ::getpid(), g_pfd, g_override, g_verbose);
     if (::setenv(typeid(_singleton).name(), temp, true) == 0) {
         size = 0;
@@ -318,7 +330,34 @@ void ofxWatchdog::child(void)
 #if defined TARGET_OSX
         size = sizeof(path);
         if (::_NSGetExecutablePath(path, &size) == 0) {
-            if ((argv = ::_NSGetArgv()) == NULL) {
+            if ((argp = ::_NSGetArgv()) != NULL) {
+                argv = *argp;
+            }
+            else {
+                error("ofxWatchdog [child] getting argv failed.");
+            }
+        }
+        else {
+            error("ofxWatchdog [child] getting path failed.");
+        }
+#elif defined TARGET_LINUX
+        ::snprintf(temp, sizeof(temp), "/proc/%d/exe", ::getpid());
+        if ((size = ::readlink(temp, path, sizeof(path) - 1)) >= 0) {
+            path[size] = '\0';
+            ::snprintf(temp, sizeof(temp), "/proc/%d/cmdline", ::getpid());
+            if ((fp = ::fopen(temp, "rb")) != NULL) {
+                ap = NULL;
+                as = 0;
+                while (::getdelim(&ap, &as, '\0', fp) >= 0) {
+                    args.push_back(ap);
+                    argp.push_back(args.back().c_str());
+                }
+                ::free(ap);
+                argp.push_back(NULL);
+                argv = argp.data();
+                ::fclose(fp);
+            }
+            else {
                 error("ofxWatchdog [child] getting argv failed.");
             }
         }
@@ -329,7 +368,7 @@ void ofxWatchdog::child(void)
 #error "algorithm not implemented"
 #endif
         if (size > 0 && argv != NULL) {
-            if (::execv(path, *argv) == 0) {
+            if (::execv(path, const_cast<char* const*>(argv)) == 0) {
                 error("ofxWatchdog [child] fatal condition error.");
             }
             else {
@@ -351,7 +390,7 @@ bool ofxWatchdog::daughter(void)
     static char s_stack[SIGSTKSZ];
     stack_t stack;
     bool result(false);
-    
+
     stack.ss_sp = &s_stack;
     stack.ss_size = sizeof(s_stack);
     stack.ss_flags = 0;
@@ -388,7 +427,7 @@ void ofxWatchdog::onUpdate(ofEventArgs& event)
 bool ofxWatchdog::install(void)
 {
     bool result(false);
-    
+
     if (g_override) {
         if (sigAction(SIGILL, &onSigILL, SA_RESTART | SA_ONSTACK)) {
             if (sigAction(SIGABRT, &onSigABRT, SA_RESTART | SA_ONSTACK)) {
@@ -428,7 +467,7 @@ bool ofxWatchdog::sigMask(int signal, bool set, bool* get)
     sigset_t mask;
     sigset_t save;
     bool result(false);
-    
+
     sigemptyset(&mask);
     sigaddset(&mask, signal);
     if (::sigprocmask((set) ? (SIG_BLOCK) : (SIG_UNBLOCK), &mask, &save) == 0) {
@@ -444,7 +483,7 @@ bool ofxWatchdog::sigAction(int signal, void(*handler)(int, siginfo_t*, void*), 
 {
     struct sigaction action;
     bool result(false);
-    
+
     action.sa_sigaction = handler;
     sigemptyset(&action.sa_mask);
     action.sa_flags = flag | SA_SIGINFO;
@@ -457,7 +496,7 @@ bool ofxWatchdog::sigAction(int signal, void(*handler)(int, siginfo_t*, void*), 
 void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* context)
 {
     static char const s_beacon = 'I';
-    
+
     ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     terminate();
     while (true) {
@@ -469,7 +508,7 @@ void ofxWatchdog::onSigILL(int signal, siginfo_t* info, void* context)
 void ofxWatchdog::onSigABRT(int signal, siginfo_t* info, void* context)
 {
     static char const s_beacon = 'A';
-    
+
     ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     terminate();
     while (true) {
@@ -481,7 +520,7 @@ void ofxWatchdog::onSigABRT(int signal, siginfo_t* info, void* context)
 void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* context)
 {
     static char const s_beacon = 'F';
-    
+
     ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     terminate();
     while (true) {
@@ -493,7 +532,7 @@ void ofxWatchdog::onSigFPE(int signal, siginfo_t* info, void* context)
 void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* context)
 {
     static char const s_beacon = 'B';
-    
+
     ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     terminate();
     while (true) {
@@ -505,7 +544,7 @@ void ofxWatchdog::onSigBUS(int signal, siginfo_t* info, void* context)
 void ofxWatchdog::onSigSEGV(int signal, siginfo_t* info, void* context)
 {
     static char const s_beacon = 'S';
-    
+
     ::write(g_pfd, &s_beacon, sizeof(s_beacon));
     terminate();
     while (true) {
