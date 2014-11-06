@@ -12,7 +12,7 @@
 **      E-mail      zap00365@nifty.com
 **
 **      This source code is for Xcode.
-**      Xcode 5.1.1 (Apple LLVM 5.1)
+**      Xcode 6.1 (Apple LLVM 6.0)
 **
 **      ofxWatchdog.cpp
 **
