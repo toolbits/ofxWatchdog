@@ -19,8 +19,7 @@ void testApp::draw(){
 //--------------------------------------------------------------
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
-#pragma clang optimize push
-#pragma clang optimize "O0"
+#pragma clang optimize off
 void testApp::keyPressed(int key) throw (std::exception) {
     int volatile z = 1;
     char* volatile p = 0;
@@ -63,7 +62,7 @@ void testApp::keyPressed(int key) throw (std::exception) {
             break;
     }
 }
-#pragma clang optimize pop
+#pragma clang optimize on
 #pragma GCC pop_options
 
 //--------------------------------------------------------------
