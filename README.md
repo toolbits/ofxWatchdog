@@ -14,6 +14,26 @@ Optionally you can use:<br/>
 <br/>
 o ofxWatchdog::clear(void)<br/>
 <br/>
+<br/>
+<br/>
+Major fix supporting of 0.9.2<br/>
+<br/>
+NEW:<br/>
+int main(){<br/>
+    ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
+<br/>
+    ofxWatchdog::watch(3000, true, true, true);<br/>
+    …<br/>
+}<br/>
+<br/>
+OLD:<br/>
+int main(){<br/>
+    ofxWatchdog::watch(3000, true, true, true);<br/>
+<br/>
+    ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
+    …<br/>
+}<br/>
+<br/>
 Development environment:<br/>
 o &lt;NEW!> MacOS X 10.11.3 + Xcode 6.2 + of 0.9.2 osx<br/>
 o MacOS X 10.10.3 + Xcode 6.3.1 + of 0.8.4 osx<br/>
