@@ -16,22 +16,22 @@ o ofxWatchdog::clear(void)<br/>
 <br/>
 <br/>
 <br/>
-Major fix supporting of 0.9.2<br/>
+Major modification supporting of 0.9.2<br/>
 <br/>
 NEW:<br/>
 int main(){<br/>
-    ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
 <br/>
-    ofxWatchdog::watch(3000, true, true, true);<br/>
-    …<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ofxWatchdog::watch(3000, true, true, true);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;…<br/>
 }<br/>
 <br/>
 OLD:<br/>
 int main(){<br/>
-    ofxWatchdog::watch(3000, true, true, true);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ofxWatchdog::watch(3000, true, true, true);<br/>
 <br/>
-    ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
-    …<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ofSetupOpenGL(1024,768, OF_WINDOW);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;…<br/>
 }<br/>
 <br/>
 Development environment:<br/>
