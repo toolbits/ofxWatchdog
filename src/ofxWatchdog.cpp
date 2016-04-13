@@ -52,6 +52,9 @@
 #include <crt_externs.h>
 #include <mach-o/dyld.h>
 #endif
+#ifdef TARGET_LINUX
+#include <linux/limits.h>
+#endif
 
 ofxWatchdog ofxWatchdog::_singleton;
 //  initial -> pid == -1
