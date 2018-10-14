@@ -20,10 +20,10 @@ o ofxWatchdog::clear(void)<br/>
 <br/>
 <br/>
 Development environment:<br/>
-version 2:
+version 2:<br/>
 &lt;NEW!> o MacOS X 10.14 + Xcode 10.0 + of_v20181009_osx_nightly<br/>
 
-version 1:
+version 1:<br/>
 o MacOS X 10.12.6 + Xcode 9.0 + of 0.9.4 osx<br/>
 o MacOS X 10.11.3 + Xcode 6.2 + of 0.9.2 osx<br/>
 o MacOS X 10.10.3 + Xcode 6.3.1 + of 0.8.4 osx<br/>
