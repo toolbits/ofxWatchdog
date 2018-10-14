@@ -6,9 +6,13 @@ You can watch your application's hang-up, illegal memory access,<br/>
 illegal instruction, segmentation fault, zero devide, abort (uncaught C++ exception).<br/>
 Then exit safely or reboot application.<br/>
 <br/>
-Only one function to use:<br/>
+If you are using openFrameworks 0.9.4 or older,<br/>
+please use version1_final tag version instead.<br/>
 <br/>
-o ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)<br/>
+Only two function to use:<br/>
+<br/>
+o ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)<br/>
+o ofxWatchdog::trap(void)<br/>
 <br/>
 Optionally you can use:<br/>
 <br/>
@@ -18,6 +22,7 @@ o ofxWatchdog::clear(void)<br/>
 <br/>
 Development environment:<br/>
 &lt;NEW!> o MacOS X 10.14 + Xcode 10.0 + of_v20181009_osx_nightly<br/>
+
 o MacOS X 10.12.6 + Xcode 9.0 + of 0.9.4 osx<br/>
 o MacOS X 10.11.3 + Xcode 6.2 + of 0.9.2 osx<br/>
 o MacOS X 10.10.3 + Xcode 6.3.1 + of 0.8.4 osx<br/>
