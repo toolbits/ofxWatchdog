@@ -1,5 +1,5 @@
 /*
-**      IridiumFrameworks
+**      ofxWatchdog version 1
 **
 **      Original Copyright (C) 2013 - 2018 HORIGUCHI Junshi.
 **                                          http://iridium.jp/
