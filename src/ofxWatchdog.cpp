@@ -217,10 +217,10 @@ bool ofxWatchdog::parent(int msec, int* code)
         if ((pid = ::waitpid(g_pid, &status, WNOHANG)) > 0) {
             if (WIFEXITED(status)) {
                 if ((*code = WEXITSTATUS(status)) == EXIT_SUCCESS) {
-                    log("ofxWatchdog [parent] detects exit externally.");
+                    log("ofxWatchdog [parent] externally detects exit.");
                 }
                 else {
-                    ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d externally.", *code);
+                    ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] externally detects error exit : %d.", *code);
                     log(temp);
                     result = true;
                 }
@@ -230,26 +230,26 @@ bool ofxWatchdog::parent(int msec, int* code)
                 result = true;
                 switch (WTERMSIG(status)) {
                     case SIGTRAP:
-                        log("ofxWatchdog [parent] detects SIGTRAP externally, process shutdown.");
+                        log("ofxWatchdog [parent] externally detects SIGTRAP, process shutdown.");
                         result = false;
                         break;
                     case SIGILL:
-                        log("ofxWatchdog [parent] detects SIGILL externally.");
+                        log("ofxWatchdog [parent] externally detects SIGILL.");
                         break;
                     case SIGABRT:
-                        log("ofxWatchdog [parent] detects SIGABRT externally.");
+                        log("ofxWatchdog [parent] externally detects SIGABRT.");
                         break;
                     case SIGFPE:
-                        log("ofxWatchdog [parent] detects SIGFPE externally.");
+                        log("ofxWatchdog [parent] externally detects SIGFPE.");
                         break;
                     case SIGBUS:
-                        log("ofxWatchdog [parent] detects SIGBUS externally.");
+                        log("ofxWatchdog [parent] externally detects SIGBUS.");
                         break;
                     case SIGSEGV:
-                        log("ofxWatchdog [parent] detects SIGSEGV externally.");
+                        log("ofxWatchdog [parent] externally detects SIGSEGV.");
                         break;
                     default:
-                        ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d externally.", WTERMSIG(status));
+                        ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] externally detects unknown signal : %d.", WTERMSIG(status));
                         log(temp);
                         break;
                 }
@@ -269,26 +269,26 @@ bool ofxWatchdog::parent(int msec, int* code)
                     signal = false;
                     break;
                 case 'I':
-                    log("ofxWatchdog [parent] detects SIGILL internally.");
+                    log("ofxWatchdog [parent] internally detects SIGILL.");
                     break;
                 case 'A':
-                    log("ofxWatchdog [parent] detects SIGABRT internally.");
+                    log("ofxWatchdog [parent] internally detects SIGABRT.");
                     break;
                 case 'F':
-                    log("ofxWatchdog [parent] detects SIGFPE internally.");
+                    log("ofxWatchdog [parent] internally detects SIGFPE.");
                     break;
                 case 'B':
-                    log("ofxWatchdog [parent] detects SIGBUS internally.");
+                    log("ofxWatchdog [parent] internally detects SIGBUS.");
                     break;
                 case 'S':
-                    log("ofxWatchdog [parent] detects SIGSEGV internally.");
+                    log("ofxWatchdog [parent] internally detects SIGSEGV.");
                     break;
                 default:
                     if (++hangup < msec) {
                         signal = false;
                     }
                     else {
-                        log("ofxWatchdog [parent] detects hangup externally.");
+                        log("ofxWatchdog [parent] externally detects hangup.");
                     }
                     break;
             }
@@ -428,7 +428,7 @@ void ofxWatchdog::daughter(void)
             }
         }
         else {
-            error("ofxWatchdog [daughter] allocating stack failed.");
+            error("ofxWatchdog [daughter] allocating signal stack failed.");
         }
     }
     return;

@@ -55,19 +55,19 @@ class ofxWatchdog {
         static  ofxWatchdog     _singleton;
 
     public:
-        // Use this at startup
+        // Use this function at startup
         //
-        //     msec : how long does the watchdog wait, when the process hangs-up in milli seconds
-        //   reboot : automatically restart the process
-        // override : use internal signal handler (optional)
-        //  verbose : print more log information (optional)
+        //     msec : how long does the watchdog timer wait, when the process hangs-up in milli seconds
+        //   reboot : automatically restart the process or not
+        // override : use internal signal handler or not (optional)
+        //  verbose : print more log information or not (optional)
         static  void            boot            (int msec, bool reboot, bool override = true, bool verbose = true);
-    
-        // Use this after ofSetupOpenGL() function call
+
+        // Use this function after ofSetupOpenGL() function call
         static  void            trap            (void);
 
-        // Use this continuously before watchdog timer timeouts (optional)
-        // This function is optional, because ofxWatchdog automatically calls this in update event.
+        // Use this function continuously before the watchdog timer timeouts (optional)
+        // This function is optional, because ofxWatchdog automatically calls this in every update events
         static  void            clear           (void);
     private:
         explicit                ofxWatchdog     (void);
