@@ -8,6 +8,8 @@ Then exit safely or reboot application.<br/>
 <br/>
 If you are using openFrameworks 0.9.4 or older, please use <a href="https://github.com/toolbits/ofxWatchdog/releases/tag/version1_final">version1_final</a> tag version instead.<br/>
 <br/>
+<br/>
+<br/>
 Only two function to use:<br/>
 <br/>
 o ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)<br/>
