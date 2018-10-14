@@ -1,4 +1,4 @@
-ofxWatchdog
+ofxWatchdog version 1
 ===========
 
 A process watchdog timer for openFrameworks applications.<br/>
@@ -17,7 +17,7 @@ o ofxWatchdog::clear(void)<br/>
 <br/>
 <br/>
 Development environment:<br/>
-o &lt;NEW!> MacOS X 10.12.6 + Xcode 9.0 + of 0.9.4 osx<br/>
+o MacOS X 10.12.6 + Xcode 9.0 + of 0.9.4 osx<br/>
 o MacOS X 10.11.3 + Xcode 6.2 + of 0.9.2 osx<br/>
 o MacOS X 10.10.3 + Xcode 6.3.1 + of 0.8.4 osx<br/>
 o ubuntu linux 14.04 LTS + Code::Blocks 13.12 + of 0.8.4 linux 64<br/>
