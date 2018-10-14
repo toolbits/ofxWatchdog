@@ -77,7 +77,7 @@ ofxWatchdog::~ofxWatchdog(void)
     terminate();
 }
 
-void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
+void ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)
 {
     char const* env;
     bool mask;
@@ -156,9 +156,7 @@ void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
         if (pfd[0] == ::getpid() && ::dup2(pfd[1], pfd[1]) >= 0 && temp[0] == override && temp[1] == verbose) {
             g_pid = pfd[0];
             g_pfd = pfd[1];
-            if (!daughter()) {
-                error("ofxWatchdog [daughter] fatal condition error.");
-            }
+            daughter();
         }
         else {
             error("ofxWatchdog [daughter] checking environment variable failed.");
@@ -167,6 +165,13 @@ void ofxWatchdog::watch(int msec, bool reboot, bool override, bool verbose)
     else {
         error("ofxWatchdog [daughter] getting environment variable failed.");
     }
+    return;
+}
+
+void ofxWatchdog::trap(void)
+{
+    ofAddListener(ofEvents().setup, &_singleton, &ofxWatchdog::onSetup);
+    ofAddListener(ofEvents().update, &_singleton, &ofxWatchdog::onUpdate);
     return;
 }
 
@@ -212,10 +217,10 @@ bool ofxWatchdog::parent(int msec, int* code)
         if ((pid = ::waitpid(g_pid, &status, WNOHANG)) > 0) {
             if (WIFEXITED(status)) {
                 if ((*code = WEXITSTATUS(status)) == EXIT_SUCCESS) {
-                    log("ofxWatchdog [parent] detects exit.");
+                    log("ofxWatchdog [parent] detects exit externally.");
                 }
                 else {
-                    ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d", *code);
+                    ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects error exit : %d externally.", *code);
                     log(temp);
                     result = true;
                 }
@@ -225,26 +230,26 @@ bool ofxWatchdog::parent(int msec, int* code)
                 result = true;
                 switch (WTERMSIG(status)) {
                     case SIGTRAP:
-                        log("ofxWatchdog [parent] detects SIGTRAP, process shutdown.");
+                        log("ofxWatchdog [parent] detects SIGTRAP externally, process shutdown.");
                         result = false;
                         break;
                     case SIGILL:
-                        log("ofxWatchdog [parent] detects SIGILL.");
+                        log("ofxWatchdog [parent] detects SIGILL externally.");
                         break;
                     case SIGABRT:
-                        log("ofxWatchdog [parent] detects SIGABRT.");
+                        log("ofxWatchdog [parent] detects SIGABRT externally.");
                         break;
                     case SIGFPE:
-                        log("ofxWatchdog [parent] detects SIGFPE.");
+                        log("ofxWatchdog [parent] detects SIGFPE externally.");
                         break;
                     case SIGBUS:
-                        log("ofxWatchdog [parent] detects SIGBUS.");
+                        log("ofxWatchdog [parent] detects SIGBUS externally.");
                         break;
                     case SIGSEGV:
-                        log("ofxWatchdog [parent] detects SIGSEGV.");
+                        log("ofxWatchdog [parent] detects SIGSEGV externally.");
                         break;
                     default:
-                        ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d", WTERMSIG(status));
+                        ::snprintf(temp, sizeof(temp), "ofxWatchdog [parent] detects unknown signal : %d externally.", WTERMSIG(status));
                         log(temp);
                         break;
                 }
@@ -264,26 +269,26 @@ bool ofxWatchdog::parent(int msec, int* code)
                     signal = false;
                     break;
                 case 'I':
-                    log("ofxWatchdog [parent] detects SIGILL.");
+                    log("ofxWatchdog [parent] detects SIGILL internally.");
                     break;
                 case 'A':
-                    log("ofxWatchdog [parent] detects SIGABRT.");
+                    log("ofxWatchdog [parent] detects SIGABRT internally.");
                     break;
                 case 'F':
-                    log("ofxWatchdog [parent] detects SIGFPE.");
+                    log("ofxWatchdog [parent] detects SIGFPE internally.");
                     break;
                 case 'B':
-                    log("ofxWatchdog [parent] detects SIGBUS.");
+                    log("ofxWatchdog [parent] detects SIGBUS internally.");
                     break;
                 case 'S':
-                    log("ofxWatchdog [parent] detects SIGSEGV.");
+                    log("ofxWatchdog [parent] detects SIGSEGV internally.");
                     break;
                 default:
                     if (++hangup < msec) {
                         signal = false;
                     }
                     else {
-                        log("ofxWatchdog [parent] detects hangup.");
+                        log("ofxWatchdog [parent] detects hangup externally.");
                     }
                     break;
             }
@@ -388,36 +393,50 @@ void ofxWatchdog::child(void)
     return;
 }
 
-bool ofxWatchdog::daughter(void)
+void ofxWatchdog::daughter(void)
 {
     static char s_stack[SIGSTKSZ];
     stack_t stack;
-    bool result(false);
 
-    stack.ss_sp = &s_stack;
-    stack.ss_size = sizeof(s_stack);
-    stack.ss_flags = 0;
-    if (::sigaltstack(&stack, NULL) == 0) {
-        if (install()) {
-            ofAddListener(ofEvents().setup, &_singleton, &ofxWatchdog::onSetup);
-            ofAddListener(ofEvents().update, &_singleton, &ofxWatchdog::onUpdate);
-            result = true;
+    if (g_override) {
+        stack.ss_sp = &s_stack;
+        stack.ss_size = sizeof(s_stack);
+        stack.ss_flags = 0;
+        if (::sigaltstack(&stack, NULL) == 0) {
+            if (sigAction(SIGILL, &onSigILL, SA_RESTART | SA_ONSTACK)) {
+                if (sigAction(SIGABRT, &onSigABRT, SA_RESTART | SA_ONSTACK)) {
+                    if (sigAction(SIGFPE, &onSigFPE, SA_RESTART | SA_ONSTACK)) {
+                        if (sigAction(SIGBUS, &onSigBUS, SA_RESTART | SA_ONSTACK)) {
+                            if (!sigAction(SIGSEGV, &onSigSEGV, SA_RESTART | SA_ONSTACK)) {
+                                error("ofxWatchdog [daughter] setting SIGSEGV handler failed.");
+                            }
+                        }
+                        else {
+                            error("ofxWatchdog [daughter] setting SIGBUS handler failed.");
+                        }
+                    }
+                    else {
+                        error("ofxWatchdog [daughter] setting SIGFPE handler failed.");
+                    }
+                }
+                else {
+                    error("ofxWatchdog [daughter] setting SIGABRT handler failed.");
+                }
+            }
+            else {
+                error("ofxWatchdog [daughter] setting SIGILL handler failed.");
+            }
         }
         else {
-            error("ofxWatchdog [daughter] fatal condition error.");
+            error("ofxWatchdog [daughter] allocating stack failed.");
         }
     }
-    else {
-        error("ofxWatchdog [daughter] allocating stack failed.");
-    }
-    return result;
+    return;
 }
 
 void ofxWatchdog::onSetup(ofEventArgs& event)
 {
-    if (!install()) {
-        error("ofxWatchdog [daughter] fatal condition error.");
-    }
+    daughter();
     return;
 }
 
@@ -425,44 +444,6 @@ void ofxWatchdog::onUpdate(ofEventArgs& event)
 {
     clear();
     return;
-}
-
-bool ofxWatchdog::install(void)
-{
-    bool result(false);
-
-    if (g_override) {
-        if (sigAction(SIGILL, &onSigILL, SA_RESTART | SA_ONSTACK)) {
-            if (sigAction(SIGABRT, &onSigABRT, SA_RESTART | SA_ONSTACK)) {
-                if (sigAction(SIGFPE, &onSigFPE, SA_RESTART | SA_ONSTACK)) {
-                    if (sigAction(SIGBUS, &onSigBUS, SA_RESTART | SA_ONSTACK)) {
-                        if (sigAction(SIGSEGV, &onSigSEGV, SA_RESTART | SA_ONSTACK)) {
-                            result = true;
-                        }
-                        else {
-                            error("ofxWatchdog [daughter] setting SIGSEGV handler failed.");
-                        }
-                    }
-                    else {
-                        error("ofxWatchdog [daughter] setting SIGBUS handler failed.");
-                    }
-                }
-                else {
-                    error("ofxWatchdog [daughter] setting SIGFPE handler failed.");
-                }
-            }
-            else {
-                error("ofxWatchdog [daughter] setting SIGABRT handler failed.");
-            }
-        }
-        else {
-            error("ofxWatchdog [daughter] setting SIGILL handler failed.");
-        }
-    }
-    else {
-        result = true;
-    }
-    return result;
 }
 
 bool ofxWatchdog::sigMask(int signal, bool set, bool* get)

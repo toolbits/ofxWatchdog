@@ -61,10 +61,13 @@ class ofxWatchdog {
         //   reboot : automatically restart the process
         // override : use internal signal handler (optional)
         //  verbose : print more log information (optional)
-        static  void            watch           (int msec, bool reboot, bool override = true, bool verbose = true);
+        static  void            boot            (int msec, bool reboot, bool override = true, bool verbose = true);
+    
+        // Use this after ofSetupOpenGL() function call
+        static  void            trap            (void);
 
         // Use this continuously before watchdog timer timeouts (optional)
-        // This function is optional, because ofxWatchdog automatically calls in update event.
+        // This function is optional, because ofxWatchdog automatically calls this in update event.
         static  void            clear           (void);
     private:
         explicit                ofxWatchdog     (void);
@@ -73,10 +76,9 @@ class ofxWatchdog {
         static  void            terminate       (void);
         static  bool            parent          (int msec, int* code);
         static  void            child           (void);
-        static  bool            daughter        (void);
+        static  void            daughter        (void);
                 void            onSetup         (ofEventArgs& event);
                 void            onUpdate        (ofEventArgs& event);
-        static  bool            install         (void);
         static  bool            sigMask         (int signal, bool set, bool* get);
         static  bool            sigAction       (int signal, void(*handler)(int, siginfo_t*, void*), int flag);
         static  void            onSigILL        (int signal, siginfo_t* info, void* context);
