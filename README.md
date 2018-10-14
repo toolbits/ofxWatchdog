@@ -6,8 +6,7 @@ You can watch your application's hang-up, illegal memory access,<br/>
 illegal instruction, segmentation fault, zero devide, abort (uncaught C++ exception).<br/>
 Then exit safely or reboot application.<br/>
 <br/>
-If you are using openFrameworks 0.9.4 or older,<br/>
-please use version1_final tag version instead.<br/>
+If you are using openFrameworks 0.9.4 or older, please use version1_final tag version instead.<br/>
 <br/>
 Only two function to use:<br/>
 <br/>
