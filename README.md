@@ -10,7 +10,7 @@ If you are using openFrameworks 0.9.4 or older, please use <a href="https://gith
 <br/>
 <br/>
 <br/>
-Only two function to use:<br/>
+Only two functions to use:<br/>
 <br/>
 o ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)<br/>
 o ofxWatchdog::trap(void)<br/>
