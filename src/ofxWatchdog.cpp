@@ -105,6 +105,7 @@ void ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)
 #endif
                             if (parent(msec, &code) && reboot) {
                                 terminate();
+                                log("ofxWatchdog [parent] reboots the child process.");
                                 initialize();
 #if defined TARGET_OSX
                                 ::TransformProcessType(&psn, kProcessTransformToForegroundApplication);
@@ -114,6 +115,7 @@ void ofxWatchdog::boot(int msec, bool reboot, bool override, bool verbose)
                             }
                             else {
                                 terminate();
+                                log("ofxWatchdog [parent] shuts down the child process.");
                                 ::exit(code);
                             }
                         }
