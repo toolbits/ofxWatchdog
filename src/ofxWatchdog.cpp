@@ -329,8 +329,8 @@ void ofxWatchdog::child(void)
     FILE* fp;
     char* ap;
     size_t as;
-    vector<string> args;
-    vector<char const*> argp;
+    std::vector<std::string> args;
+    std::vector<char const*> argp;
 #endif
 
     ::snprintf(temp, sizeof(temp), "%d:%d:%d:%d", ::getpid(), g_pfd, g_override, g_verbose);
